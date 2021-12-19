@@ -63,9 +63,10 @@ void ampSolver(const Eigen::MatrixXd& V, const MeshConnectivity& mesh, const Eig
         Mcoeffs.push_back({ v1, v0, -onestar[i] });
 
         // frequency coeffs
-        double freqweight = 0.5 * (omegas(i, 0) * omegas(i, 0) + omegas(i, 1) * omegas(i, 1));
-        Mcoeffs.push_back({ v0, v0, freqweight });
-        Mcoeffs.push_back({ v1, v1, freqweight });
+        double freqweight1 = 0.5 * omegas(i, 0) * omegas(i, 0);
+        double freqweight2 = 0.5 * omegas(i, 1) * omegas(i, 1);
+        Mcoeffs.push_back({ v0, v0, freqweight1 });
+        Mcoeffs.push_back({ v1, v1, freqweight2 });
     }
 
     int nverts = V.rows();

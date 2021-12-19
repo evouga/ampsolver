@@ -4,7 +4,7 @@
 #include "AmpSolver.h"
 #include <igl/jet.h>
 
-int exampleid = 0;
+int exampleid = 1;
 
 Eigen::Vector3d vectorField(Eigen::Vector3d pos)
 {
@@ -88,11 +88,12 @@ int main(int argc, char *argv[])
         int v1 = mesh.edgeVertex(i, 1);
         Eigen::Vector3d end0 = V.row(v0).transpose();
         Eigen::Vector3d end1 = V.row(v1).transpose();
-        Eigen::Vector3d pos = 0.5 * (end0 + end1);
-        Eigen::Vector3d vec = vectorField(pos);
-        double omega = vec.dot(end1 - end0);
-        omegas(i, 0) = omega;
-        omegas(i, 1) = omega;
+        Eigen::Vector3d vec1 = vectorField(end0);
+        Eigen::Vector3d vec2 = vectorField(end1);
+        double omega1 = vec1.dot(end1 - end0);
+        double omega2 = vec2.dot(end0 - end1);        
+        omegas(i, 0) = std::isnan(omega1) ? 1e6 : omega1;
+        omegas(i, 1) = std::isnan(omega2) ? 1e6 : omega2;
     }
     Eigen::VectorXd amp;
     ampSolver(V, mesh, omegas, amp);
