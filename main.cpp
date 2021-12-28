@@ -1,10 +1,15 @@
-#include <igl/opengl/glfw/Viewer.h>
+#include "polyscope/polyscope.h"
+#include "polyscope/surface_mesh.h"
 #include <igl/triangle/triangulate.h>
 #include "MeshConnectivity.h"
 #include "AmpSolver.h"
 #include <igl/jet.h>
+#include <igl/readOBJ.h>
+#include <fstream>
+#include <igl/cotmatrix_entries.h>
+#include <igl/massmatrix.h>
 
-int exampleid = 1;
+int exampleid = 0;
 
 Eigen::Vector3d vectorField(Eigen::Vector3d pos)
 {
@@ -74,6 +79,8 @@ void createSquare(Eigen::MatrixXd& V, Eigen::MatrixXi& F, double triarea)
 
 int main(int argc, char *argv[])
 {
+    polyscope::init();
+
     Eigen::MatrixXd V;
     Eigen::MatrixXi F;
 
@@ -95,20 +102,44 @@ int main(int argc, char *argv[])
         omegas(i, 0) = std::isnan(omega1) ? 1e6 : omega1;
         omegas(i, 1) = std::isnan(omega2) ? 1e6 : omega2;
     }
+
     Eigen::VectorXd amp;
     ampSolver(V, mesh, omegas, amp);
 
-    //std::cout << amp << std::endl;
-    int nverts = V.rows();
-    Eigen::MatrixXd C(nverts, 3);
-    igl::jet(amp, false, C);
+    std::map<std::pair<int, int>, int > polyordering;
 
-    std::cout << "minimum amplitude: " << amp.minCoeff() << ", maximum: " << amp.maxCoeff() << std::endl;
+    int idx = 0;
+    for (int i = 0; i < F.rows(); i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            int v0 = F(i, j);
+            int v1 = F(i, (j + 1) % 3);
+            auto it = polyordering.find({ v0,v1 });
+            if (it != polyordering.end())
+                continue;
+            polyordering[{v0, v1}] = idx;
+            polyordering[{v1, v0}] = idx;
+            idx++;
+        }
+    }
 
-  // Plot the mesh
-  igl::opengl::glfw::Viewer viewer;
-  viewer.data().set_mesh(V, F);
-  viewer.data().set_colors(C);
-  viewer.data().set_face_based(false);
-  viewer.launch();
+    std::vector<int> perm(nedges);
+    for (int i = 0; i < nedges; i++)
+    {
+        //perm[i] = polyordering[{mesh.edgeVertex(i, 0), mesh.edgeVertex(i, 1)}];
+        perm[polyordering[{mesh.edgeVertex(i, 0), mesh.edgeVertex(i, 1)}]] = i;
+    }
+
+
+
+
+    auto* pmesh = polyscope::registerSurfaceMesh("Mesh", V, F);
+    pmesh->setEdgePermutation(perm);
+    pmesh->addEdgeScalarQuantity("Omega 1", omegas.col(0));
+    pmesh->addEdgeScalarQuantity("Omega 2", omegas.col(1));
+    pmesh->addVertexScalarQuantity("Amp", amp);
+
+    // visualize!
+    polyscope::show();
 }

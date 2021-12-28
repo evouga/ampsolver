@@ -5,6 +5,9 @@ list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package(SPECTRA REQUIRED)
 
+# Find Polyscope
+find_package(Polyscope REQUIRED)
+
 # Libigl
 option(LIBIGL_WITH_OPENGL            "Use OpenGL"         ON)
 option(LIBIGL_WITH_OPENGL_GLFW       "Use GLFW"           ON)
@@ -15,4 +18,4 @@ include(libigl)
 file(GLOB SRC_FILES *.cpp)
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${SPECTRA_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC igl::core igl::opengl_glfw igl::triangle)
+target_link_libraries(${PROJECT_NAME} PUBLIC igl::core igl::opengl_glfw igl::triangle polyscope)
